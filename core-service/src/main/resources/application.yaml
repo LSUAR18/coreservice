@@ -1,0 +1,61 @@
+# --- CONFIGURACIÓN BASE (Común para todos) ---
+server:
+  port: 8080
+
+spring:
+  application:
+    name: health-core-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local} # Por defecto arranca en perfil 'local'
+    
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+  expiration: ${JWT_EXPIRATION:86400000}
+---
+# --- PERFIL: local (Para desarrollo en VS Code) ---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+---
+# --- PERFIL: docker (Para el contenedor y Cloud Run) ---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false # Limpiamos los logs en "producción"
+    hibernate:
+      ddl-auto: none # En Docker es mejor no dejar que Hibernate modifique tablas automáticamente
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    root: INFO
+    com.health.api.core: DEBUG # Tu código en modo debug
+    org.springframework.security: DEBUG # Para ver por qué fallan los accesos
+    org.hibernate.SQL: DEBUG # Para ver las consultas a la DB
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
